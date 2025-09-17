@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Red Social</title>
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        :root{--accent1:#ff69b4;--accent2:#ff914d;--accent3:#ff2a68}
+        body{font-family:'Poppins',Arial,sans-serif;background:#f6f5f7;margin:0;padding:40px}
+        .wrap{max-width:1000px;margin:24px auto}
+        .card{background:#fff;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.08);padding:24px}
+        header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+        h1{color:var(--accent3);margin:0}
+        .actions{display:flex;gap:12px}
+        .btn{background:linear-gradient(120deg,var(--accent1),var(--accent3));color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer}
+        .users-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:16px}
+        .user{padding:12px;border-radius:8px;border:1px solid #f0f0f0;background:#fff}
+        .user h3{margin:0 0 6px}
+        .modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
+        .modal.open{display:flex}
+        .modal-content{background:#fff;padding:20px;border-radius:10px;min-width:320px}
+        .input{display:flex;gap:8px;align-items:center;margin:8px 0;padding:8px;border:1px solid #eee;border-radius:8px}
+        .input input{border:0;outline:none;flex:1}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <header>
+                <h1>Usuarios</h1>
+                <div class="actions">
+                    <button class="btn" id="btnCreate">Crear usuario</button>
+                </div>
+            </header>
+            <div style="overflow:auto;margin-top:12px">
+                <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden">
+                    <thead style="background:#f3f4f6;color:#111;text-align:left">
+                        <tr>
+                            <th style="padding:12px;border-bottom:1px solid #e5e7eb">Nombre</th>
+                            <th style="padding:12px;border-bottom:1px solid #e5e7eb">Nick</th>
+                            <th style="padding:12px;border-bottom:1px solid #e5e7eb">Email</th>
+                            <th style="padding:12px;border-bottom:1px solid #e5e7eb">Rol</th>
+                            <th style="padding:12px;border-bottom:1px solid #e5e7eb;text-align:center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                    </tbody>
+                </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                <button id="logoutBtn" class="btn" style="background:#4b5563">Cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <aside id="drawerEdit" style="position:fixed;right:-460px;top:0;height:100%;width:420px;background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,0.12);transition:right .28s ease;padding:20px;z-index:9999">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3 id="drawerEditTitle">Crear usuario</h3>
+            <button id="closeDrawerEdit" style="background:#eee;border:0;padding:6px 10px;border-radius:6px;cursor:pointer">Cerrar</button>
+        </div>
+        <div id="drawerEditMessage" style="min-height:18px;color:#e74c3c"></div>
+        <div class="input"><input id="e_name" placeholder="Nombre"></div>
+        <div class="input"><input id="e_surname" placeholder="Apellido"></div>
+        <div class="input"><input id="e_nick" placeholder="Nick"></div>
+        <div class="input"><input id="e_email" placeholder="Correo"></div>
+        <div class="input"><input id="e_password" placeholder="Contraseña" type="password"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+            <button class="btn" id="saveEditUser">Guardar</button>
+            <button class="btn" id="cancelEditUser" style="background:#777">Cancelar</button>
+        </div>
+    </aside>
+
+    <aside id="drawerView" style="position:fixed;right:-420px;top:0;height:100%;width:360px;background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,0.12);transition:right .28s ease;padding:20px;z-index:9999">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3>Ver usuario</h3>
+            <button id="closeDrawerView" style="background:#eee;border:0;padding:6px 10px;border-radius:6px;cursor:pointer">Cerrar</button>
+        </div>
+        <div class="input"><input id="v_name" placeholder="Nombre" disabled></div>
+        <div class="input"><input id="v_surname" placeholder="Apellido" disabled></div>
+        <div class="input"><input id="v_nick" placeholder="Nick" disabled></div>
+        <div class="input"><input id="v_email" placeholder="Correo" disabled></div>
+    </aside>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Eliminar usuario</h3>
+            <div id="deleteMessage" style="min-height:18px;color:#e74c3c"></div>
+            <p>¿Estás seguro que deseas eliminar este usuario?</p>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+                <button class="btn" id="confirmDelete">Eliminar</button>
+                <button class="btn" id="cancelDelete" style="background:#777">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications (centered above the module) -->
+    <div id="toasts" style="position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(760px,90%)"></div>
+
+    <!-- removed legacy drawer (duplicate) -->
+    <!-- icons handled inline in other screens; removed external kit -->
+    <script>
+        const API = (window.API_URL || 'http://localhost:3900');
+        let currentEditingId = null; // null => create
+        let deleteTargetId = null;
+
+        const toasts = document.getElementById('toasts');
+
+        function showToast(msg, type = 'info'){
+            const el = document.createElement('div');
+            el.style.pointerEvents = 'auto';
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.gap = '10px';
+            el.style.padding = '12px 16px';
+            el.style.borderRadius = '10px';
+            el.style.color = '#fff';
+            el.style.boxShadow = '0 10px 30px rgba(2,6,23,0.12)';
+            el.style.minWidth = '320px';
+            el.style.maxWidth = '720px';
+            el.style.transition = 'transform .28s ease,opacity .28s ease';
+            el.style.transform = 'translateY(-8px)';
+            el.style.opacity = '0';
+            // icon
+            const icon = document.createElement('span');
+            icon.innerHTML = (type === 'success') ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : (type === 'error') ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.2"/><path d="M12 8v5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="17.5" r=".5" fill="white"/></svg>';
+            const text = document.createElement('div'); text.textContent = msg; text.style.flex = '1';
+            if(type === 'success') el.style.background = 'linear-gradient(90deg,#10b981,#059669)';
+            else if(type === 'error') el.style.background = 'linear-gradient(90deg,#ef4444,#dc2626)';
+            else el.style.background = 'linear-gradient(90deg,#111827,#374151)';
+            el.appendChild(icon); el.appendChild(text);
+            toasts.appendChild(el);
+            // animate in
+            requestAnimationFrame(()=>{ el.style.transform = 'translateY(0)'; el.style.opacity = '1'; });
+            setTimeout(()=>{ el.style.transform = 'translateY(-8px)'; el.style.opacity = '0'; setTimeout(()=>el.remove(),320); }, 3600);
+        }
+
+        function openDrawerEdit(create=false){
+            document.getElementById('drawerEdit').style.right = '0';
+            document.getElementById('drawerEditTitle').textContent = create ? 'Crear usuario' : 'Editar usuario';
+            document.getElementById('drawerEditMessage').textContent = '';
+        }
+        function closeDrawerEdit(){ document.getElementById('drawerEdit').style.right = '-460px'; currentEditingId = null; }
+        function openDrawerView(){ document.getElementById('drawerView').style.right = '0'; }
+        function closeDrawerView(){ document.getElementById('drawerView').style.right = '-420px'; }
+        function openDeleteModal(id){ deleteTargetId = id; document.getElementById('deleteModal').classList.add('open'); }
+        function closeDeleteModal(){ deleteTargetId = null; document.getElementById('deleteModal').classList.remove('open'); }
+
+        async function fetchUsers(){
+            try{
+                const res = await fetch(`${API}/api/user/list`);
+                const data = await res.json();
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+                (data.users||[]).forEach(u=>{
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="padding:12px;border-bottom:1px solid #eee">${u.name} ${u.surname||''}</td>
+                        <td style="padding:12px;border-bottom:1px solid #eee">${u.nick}</td>
+                        <td style="padding:12px;border-bottom:1px solid #eee">${u.email}</td>
+                        <td style="padding:12px;border-bottom:1px solid #eee">${u.role||'user'}</td>
+                        <td style="padding:12px;border-bottom:1px solid #eee;text-align:center">
+                            <button title="Ver" data-action="view" data-id="${u._id}" style="background:transparent;border:0;cursor:pointer;margin-right:6px">${svgIcon('eye')}</button>
+                            <button title="Editar" data-action="edit" data-id="${u._id}" style="background:transparent;border:0;cursor:pointer;margin-right:6px">${svgIcon('edit')}</button>
+                            <button title="Eliminar" data-action="delete" data-id="${u._id}" style="background:transparent;border:0;cursor:pointer">${svgIcon('trash')}</button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+                tbody.querySelectorAll('button[data-action]').forEach(b=>b.addEventListener('click', onUserAction));
+            }catch(e){ console.error(e); showToast('Error cargando usuarios','error'); }
+        }
+
+        function svgIcon(name){
+            if(name==='eye') return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.2"/></svg>`;
+            if(name==='edit') return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 21v-3.75L14.81 5.44a2 2 0 0 1 2.83 0l2.92 2.92a2 2 0 0 1 0 2.83L8.78 21H3z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+            if(name==='trash') return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11v6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+            return '';
+        }
+
+        async function onUserAction(e){
+            const btn = e.currentTarget; const id = btn.dataset.id; const action = btn.dataset.action;
+            if(action==='view'){
+                try{ const res = await fetch(`${API}/api/user/${id}`); if(!res.ok) throw 0; const { user } = await res.json(); document.getElementById('v_name').value = user.name||''; document.getElementById('v_surname').value = user.surname||''; document.getElementById('v_nick').value = user.nick||''; document.getElementById('v_email').value = user.email||''; openDrawerView(); }catch(e){ showToast('No se pudo obtener usuario','error'); }
+            } else if(action==='edit'){
+                try{ const res = await fetch(`${API}/api/user/${id}`); if(!res.ok) throw 0; const { user } = await res.json(); currentEditingId = id; document.getElementById('e_name').value = user.name||''; document.getElementById('e_surname').value = user.surname||''; document.getElementById('e_nick').value = user.nick||''; document.getElementById('e_email').value = user.email||''; document.getElementById('e_password').value = ''; openDrawerEdit(false); }catch(e){ showToast('No se pudo obtener usuario','error'); }
+            } else if(action==='delete'){
+                openDeleteModal(id);
+            }
+        }
+
+        // create flow
+        document.getElementById('btnCreate').addEventListener('click', ()=>{ currentEditingId = null; document.getElementById('e_name').value=''; document.getElementById('e_surname').value=''; document.getElementById('e_nick').value=''; document.getElementById('e_email').value=''; document.getElementById('e_password').value=''; openDrawerEdit(true); });
+        document.getElementById('closeDrawerEdit').addEventListener('click', closeDrawerEdit);
+        document.getElementById('cancelEditUser').addEventListener('click', closeDrawerEdit);
+
+        document.getElementById('saveEditUser').addEventListener('click', async ()=>{
+            const payload = { name: document.getElementById('e_name').value.trim(), surname: document.getElementById('e_surname').value.trim(), nick: document.getElementById('e_nick').value.trim(), email: document.getElementById('e_email').value.trim() };
+            const pw = document.getElementById('e_password').value; if(pw) payload.password = pw;
+            try{
+                let res;
+                if(!currentEditingId){ // create
+                    res = await fetch(`${API}/api/user/register`,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+                    const data = await res.json(); if(!res.ok){ document.getElementById('drawerEditMessage').textContent = data.message||'Error'; return; }
+                    showToast('Usuario creado','success');
+                } else {
+                    // PUT requires auth token
+                    const token = localStorage.getItem('token');
+                    if(!token){ document.getElementById('drawerEditMessage').textContent = 'Necesitas iniciar sesión'; showToast('Inicia sesión para editar','error'); return; }
+                    res = await fetch(`${API}/api/user/${currentEditingId}`,{ method:'PUT', headers:{'Content-Type':'application/json','Authorization': 'Bearer ' + token}, body:JSON.stringify(payload) });
+                    const data = await res.json(); if(!res.ok){ document.getElementById('drawerEditMessage').textContent = data.message||'Error'; return; }
+                    showToast('Usuario actualizado','success');
+                }
+                closeDrawerEdit(); fetchUsers();
+            }catch(e){ document.getElementById('drawerEditMessage').textContent = 'Error de conexión'; }
+        });
+
+        // delete modal
+        document.getElementById('confirmDelete').addEventListener('click', async ()=>{
+            if(!deleteTargetId) return; 
+            try{
+                const token = localStorage.getItem('token');
+                if(!token){ document.getElementById('deleteMessage').textContent = 'Necesitas iniciar sesión'; showToast('Inicia sesión para eliminar','error'); return; }
+                const res = await fetch(`${API}/api/user/${deleteTargetId}`,{ method:'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                const d = await res.json(); if(!res.ok){ document.getElementById('deleteMessage').textContent = d.message||'Error'; return; }
+                closeDeleteModal(); showToast('Usuario eliminado','success'); fetchUsers();
+            }catch(e){ document.getElementById('deleteMessage').textContent = 'Error de conexión'; }
+        });
+        document.getElementById('cancelDelete').addEventListener('click', closeDeleteModal);
+
+        // drawer view controls
+        document.getElementById('closeDrawerView').addEventListener('click', closeDrawerView);
+
+        // logout
+        document.getElementById('logoutBtn').addEventListener('click', ()=>{ localStorage.removeItem('token'); showToast('Sesión cerrada','info'); setTimeout(()=> window.location.href = '../auth/login/login.html',600); });
+
+        // show toast after login if flag present
+        if(localStorage.getItem('justLoggedUser')){ showToast(`Sesión iniciada: ${localStorage.getItem('justLoggedUser')}`,'success'); localStorage.removeItem('justLoggedUser'); }
+
+        fetchUsers();
+    </script>
+</body>
+</html>
