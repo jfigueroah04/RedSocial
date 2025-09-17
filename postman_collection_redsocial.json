@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "RedSocial - API",
+    "_postman_id": "redsocial-collection-001",
+    "description": "Colección para API RedSocial (usuario). Contiene login que guarda token y peticiones protegidas que usan {{authToken}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3900",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Usuario / Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"daniel@email.com\",\n  \"password\": \"TU_PASSWORD_AQUI\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/user/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","user","login"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "try {",
+              "  const json = pm.response.json();",
+              "  if (json && json.token) {",
+              "    // Guardar en environment y en variables de colección por si no hay environment activo",
+              "    pm.environment.set('authToken', json.token);",
+              "    pm.collectionVariables.set('authToken', json.token);",
+              "    console.log('authToken guardado:', json.token);",
+              "  } else {",
+              "    console.log('No se encontró token en la respuesta:', pm.response.text());",
+              "  }",
+              "} catch (e) {",
+              "  console.log('Error parseando respuesta:', e);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuario / Obtener por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/user/68ca2886f0832e830ae1660d",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","user","68ca2886f0832e830ae1660d"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Usuario / Listar",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/user/list",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","user","list"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Usuario / Actualizar (protegido)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Daniel Actualizado\",\n  \"nick\": \"josuwus_mod\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/user/68ca2886f0832e830ae1660d",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","user","68ca2886f0832e830ae1660d"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Usuario / Eliminar (protegido)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/user/68ca2886f0832e830ae1660d",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","user","68ca2886f0832e830ae1660d"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

@@ -2,15 +2,12 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('../services/jwt');
 
-// Registro de usuario
 const register = async (req, res) => {
   try {
     const { name, surname, nick, email, password, role, image } = req.body;
-    // Validar datos
     if (!name || !nick || !email || !password) {
       return res.status(400).json({ message: 'Faltan datos por enviar' });
     }
-    // Verificar si el usuario ya existe por email o nick
     const userExists = await User.findOne({
       $or: [
         { email: email.toLowerCase() },
@@ -20,10 +17,8 @@ const register = async (req, res) => {
     if (userExists) {
       return res.status(400).json({ message: 'El usuario ya existe' });
     }
-    // Encriptar contraseña
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    // Crear usuario
     const user = new User({
       name,
       surname,
